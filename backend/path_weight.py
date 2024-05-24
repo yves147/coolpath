@@ -50,8 +50,9 @@ def trapeziodal_integral(coords_list: list[tuple[float,float]] = list(), T: floa
     if len(coords_list) == 2:
         T = math.sqrt(pow(coords_list[0][0] - coords_list[1][0], 2) + pow(coords_list[0][1] - coords_list[1][1], 2))
         n = 4 * (int(T) + 1)
-
-    distance_coords_list = coords_to_distance(coords_list)
+        distance_coords_list = [(0, coords_list[0]), (T, coords_list[1])]
+    else:
+        distance_coords_list = coords_to_distance(coords_list)
 
     dx = T / n;
     sum = 0.5 * (function_at_distance(0, distance_coords_list) + function_at_distance(T, distance_coords_list))
@@ -59,5 +60,3 @@ def trapeziodal_integral(coords_list: list[tuple[float,float]] = list(), T: floa
         xi = i * dx
         sum += function_at_distance(xi, distance_coords_list)
     return sum * dx
-
-print(trapeziodal_integral([(0,0),(1,1)]))
