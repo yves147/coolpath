@@ -5,44 +5,53 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import ThemedCard from '@rneui/themed/dist/Card';
+
 
 
 
 export default function HomeScreen() {
   return (
-  
+    <ThemedView style={styles.main}>
       <ThemedView style={styles.titleContainer}>
-        
-        
-      <ThemedView style={styles.stepContainer}>
 
-      <ThemedText type="title">Cool Path</ThemedText>
-        <SearchBar 
-          style={styles.searchBar}
-          placeholder="Startpunkt1234"
-        /*onChangeText={setSearchQuery}
-        value={searchQuery}*/
-        />
-        <SearchBar placeholder="Zielpunkt" />
-        <Button
-          title={"Hallo, wie gehts?"}
-          containerStyle={{
-            borderRadius: 3
+
+        <ThemedView style={styles.stepContainer}>
+          <Image style={{
+            resizeMode: 'contain',
+            height: 100,
+            width: 200,
           }}
-        />
+          source={require('../../media/logo.jpeg')}/>
+          <Button
+            color= "grey"
+            title={"Nach Route suchen"}
+            containerStyle={{
+              borderRadius: 1
+            }}
+          />
+        </ThemedView>
+        <ThemedView
+          style={styles.map}
+        >
+          <ThemedText>HI</ThemedText>
+        </ThemedView>
       </ThemedView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
+  main: {
+    height: '100vh',
+    width: '100vw',
+  },
   titleContainer: {
-    marginTop: 50,
-    gap: 8,
+    marginTop: 20,
+    padding: 10 
   },
   stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+    gap: 0,
   },
   reactLogo: {
     height: 178,
@@ -52,6 +61,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   searchBar: {
+
+  },
+  map: {
+    minHeight: 600,
+    backgroundColor: "black",
+    flex: 1,
 
   },
 });
