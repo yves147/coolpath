@@ -1,0 +1,2 @@
+fastapi # backend web server
+OWSLib # parse geoserver WMS data

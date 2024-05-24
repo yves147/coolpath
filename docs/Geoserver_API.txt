@@ -17,4 +17,4 @@ WMS Libs:
 geotiff Libs:
 • https://geopandas.org/en/stable/
 • https://pypi.org/project/rasterio/
-• https://gdal.org/
+• https://gdal.org/ 
