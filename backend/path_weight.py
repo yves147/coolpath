@@ -15,13 +15,13 @@ def coords_to_distance(coords_list: list[tuple[float,float]]) -> tuple[float,tup
     return distance_list
 
 def temperature_at_coords(lat, long) -> float:
-    return 25
+    return 1
 
 def average_windspeed_at_coords(lat, long) -> float:
-    return 50
+    return 0
 
 def perceived_temperature_at_coords(lat, long) -> float:
-    return 25
+    return 0
 
 def climatope_at_coords(lat, long) -> float:
     return 0
