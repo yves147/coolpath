@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Platform } from 'react-native';
+import { Button } from '@rneui/themed';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -18,6 +19,12 @@ export default function HomeScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Cool Path</ThemedText>
         <HelloWave />
+        <Button
+          title={"Hallo" + ", " + " wie gehts?"}
+          containerStyle={{
+            borderRadius: 3
+          }}
+        />
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
