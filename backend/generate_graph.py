@@ -35,7 +35,7 @@ class Map:
         return self.nodes.get(node_hash)
 
     def save_to_file(self):
-        with open("map_data.pkl", 'wb') as file:
+        with open("map_data.pkl", "wb") as file:
             pickle.dump(self, file)
 
     @staticmethod
@@ -43,7 +43,7 @@ class Map:
         file_path = "map_data.pkl"
 
         if os.path.getsize(file_path) > 0:
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 unpickler = pickle.Unpickler(file)
 
                 return unpickler.load()
@@ -55,7 +55,7 @@ def handle_node(node_to_handle: Node):
     open_points: list[Node] = [node_to_handle]
 
     while open_points:
-        #if len(map_object.nodes) == 500:
+        # if len(map_object.nodes) == 500:
         #    return
 
         if len(map_object.nodes) % 50 == 0:
@@ -67,14 +67,18 @@ def handle_node(node_to_handle: Node):
 
         neighbour_points = get_neighbours(current_node.point, None, json_data)
 
-        for (feature, neighbour_point) in neighbour_points:
+        for feature, neighbour_point in neighbour_points:
             neighbour_node = Node(neighbour_point)
 
             existing_neighbour = map_object.get_node(neighbour_node.get_hash())
 
             if existing_neighbour:
-                map_object.connections[existing_neighbour.get_hash()].append(current_node)
-                map_object.connections[current_node.get_hash()].append(existing_neighbour)
+                map_object.connections[existing_neighbour.get_hash()].append(
+                    current_node
+                )
+                map_object.connections[current_node.get_hash()].append(
+                    existing_neighbour
+                )
 
                 continue
 
@@ -87,7 +91,7 @@ if __name__ == "__main__":
 
     import json
 
-    with open("daten.json", encoding='utf-8') as f:
+    with open("daten.json", encoding="utf-8") as f:
         json_data = json.load(f)
 
     map_object: Map = Map()
@@ -96,7 +100,9 @@ if __name__ == "__main__":
 
     # Debug Total Nodes
 
-    total_node_count = sum(len(feature["geometry"]["coordinates"]) for feature in json_data["features"])
+    total_node_count = sum(
+        len(feature["geometry"]["coordinates"]) for feature in json_data["features"]
+    )
 
     print(total_node_count)
 
@@ -113,7 +119,7 @@ if __name__ == "__main__":
     #    print(node.longitude)
     #    print(node.latitude)
 
-    #for start_node, end_nodes in map_object.connections.items():
+    # for start_node, end_nodes in map_object.connections.items():
     #    print(f"{start_node}: {end_nodes}")
 
     print(map_object.connections[list(map_object.nodes.keys())[0]])
