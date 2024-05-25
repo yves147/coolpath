@@ -1,5 +1,7 @@
-
+from datetime import datetime
 import math
+
+from geoapi import convertColorToTemperature, getLayerSpaceTimePixel, Layer
 
 def coords_to_distance(coords_list: list[tuple[float,float]]) -> tuple[float,tuple[float,float]]:
     distance_list = []
@@ -15,16 +17,22 @@ def coords_to_distance(coords_list: list[tuple[float,float]]) -> tuple[float,tup
     
     return distance_list
 
-def temperature_at_coords(lat, long) -> float:
+def temperature_at_coords(lon, lat) -> float:
     return 1
 
-def average_windspeed_at_coords(lat, long) -> float:
+def average_windspeed_at_coords(lon, lat) -> float:
     return 0
 
-def perceived_temperature_at_coords(lat, long) -> float:
-    return 0
+def perceived_temperature_at_coords(lon, lat) -> float:
+    layer = Layer.PERCEIVED_TEMPERATURE
+    time = datetime.fromisoformat("2023-08-11T10:00:00+00:00")  # TODO: proper time parameter
 
-def climatope_at_coords(lat, long) -> float:
+    pixel = getLayerSpaceTimePixel(layer, lat, lon, time)
+    approxTemperature = convertColorToTemperature(layer, pixel)
+
+    return approxTemperature
+
+def climatope_at_coords(lon, lat) -> float:
     return 0
 
 def function_at_coords(lat, long, parameters = dict(temperature_alpha = 1, windspeed_beta=0.2, perceived_gamma=0.4, climatope_zeta=0.3)) -> float:
