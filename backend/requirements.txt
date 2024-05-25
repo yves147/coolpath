@@ -5,3 +5,4 @@ pytest # unit test
 folium # debug map generation
 black # formatting
 numpy # obvious
+geopy # search for adresses like "Dresden H"
