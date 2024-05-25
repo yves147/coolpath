@@ -33,7 +33,12 @@ def perceived_temperature_at_coords(lon, lat) -> float:
     return approxTemperature
 
 def climatope_at_coords(lon, lat) -> float:
-    return 0
+    layer = Layer.KLIMATOPE
+
+    pixel = getLayerSpaceTimePixel(layer, lat, lon)
+    climateCategory = convertColorToValue(layer, pixel)
+
+    return climateCategory
 
 def function_at_coords(lat, long, parameters = dict(temperature_alpha = 1, windspeed_beta=0.2, perceived_gamma=0.4, climatope_zeta=0.3)) -> float:
     return parameters["temperature_alpha"] * temperature_at_coords(lat, long) + \
