@@ -1,8 +1,9 @@
-import folium
-import webbrowser
 import os
+import webbrowser
 
-from generate_graph import Map, Node
+import folium
+
+from generate_graph import Map, Node  # noqa
 from main import find_path
 
 
@@ -20,19 +21,20 @@ def plot_coordinates_on_map(data, start, end):
     folium.Marker([end[1], end[0]], icon=folium.Icon(color="green")).add_to(map)
 
     # Speichere die Karte als HTML-Datei
-    map_path = 'map.html'
+    map_path = "map.html"
     map.save(map_path)
 
     # Öffne die gespeicherte HTML-Datei in einem Webbrowser
-    webbrowser.open('file://' + os.path.realpath(map_path))
+    webbrowser.open("file://" + os.path.realpath(map_path))
 
 
 import json
 
 start_point = [13.732952417266883, 51.03403674195253]
-end_point = [13.751770840358994, 51.06299305729817]
+end_point = [13.77717289668698, 51.02789079700501]
 
-with open("daten.json", encoding='utf-8') as f:
+
+with open("daten.json", encoding="utf-8") as f:
     json_data = json.load(f)
 
 print("loaded")
