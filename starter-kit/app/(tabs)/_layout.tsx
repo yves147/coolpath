@@ -4,6 +4,7 @@ import RouteStart from "./RouteStart";
 import RouteUI from "./RouteUI";
 import index from "./index";
 import ARview from "./ARview";
+import SettingsMenu from "./settings";
 import { View } from "react-native";
 import { Text } from "@rneui/base";
 import { ThemedView } from "../../components/ThemedView";
@@ -29,6 +30,9 @@ const TabBarEl = () => {
     <Link to="/ar" style={styles.tabItem} underlayColor="#f0f4f7">
       <Text>AR View</Text>
     </Link>
+    <Link to="/settings" style={styles.tabItem} underlayColor="#f0f4f7">
+      <Text>Settings</Text>
+    </Link>
   </View>
 }
 
@@ -40,6 +44,7 @@ export default function App (){
             <Route path="/start" Component={RouteStart} />
             <Route path="/route" Component={RouteUI} />
             <Route path="/ar" Component={ARview} />
+            <Route path="/settings" Component={SettingsMenu} />
           </Routes>
           <TabBarEl />
         </NativeRouter>

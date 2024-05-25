@@ -38,8 +38,8 @@ const HTMLContent = `
             // Listen for messages from React Native
             document.addEventListener("message", function(event) {
                 var data = JSON.parse(event.data);
-                if (data.type === 'addMarker') {
-                    L.marker([data.lat, data.lng]).addTo(map)
+                if (data.type === 'line') {
+                    L.polyline(data.pnts, {color: 'red', weight: 10}).addTo(map)
                      .bindPopup(data.popupText)
                      .openPopup();
                 }

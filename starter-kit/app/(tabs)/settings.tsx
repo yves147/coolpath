@@ -1,21 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
-import { Slider } from '@rneui/themed';
+import { View, Text, StyleSheet, Button, Alert,  } from 'react-native';
+import { Slider, Icon } from '@rneui/themed';
 
 export default function SettingsMenu() {
   const [sliderValue1, setSliderValue1] = useState(0);
   const [sliderValue2, setSliderValue2] = useState(0);
   const [sliderValue3, setSliderValue3] = useState(0);
+  const [value, setValue] = useState(0);
 
-  const totalValue = sliderValue1 + sliderValue2 + sliderValue3;
-  const averageValue = totalValue / 3;
+const interpolate = (start: number, end: number) => {
+  let k = (value - 0) / 10; // 0 =>min  && 10 => MAX
+  return Math.ceil((1 - k) * start + k * end) % 256;
+};
+
+const color = () => {
+  let r = interpolate(255, 0);
+  let g = 0;
+  let b = interpolate(0, 200);
+  return `rgb(${r},${g},${b})`;
+};
+
+  const someValue = 42;
+  const someOtherValue = 69
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Settings Menu</Text>
 
       <View style={styles.sliderContainer}>
-        <Text style={styles.label}>Parameter 1</Text>
+        <Text style={styles.label}>Zeit</Text>
         <Slider
           style={styles.slider}
           minimumValue={0}
@@ -28,20 +41,33 @@ export default function SettingsMenu() {
       </View>
 
       <View style={styles.sliderContainer}>
-        <Text style={styles.label}>Parameter 2</Text>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={100}
-          step={1}
-          value={sliderValue2}
-          onValueChange={setSliderValue2}
-        />
-        <Text style={styles.value}>{sliderValue2}</Text>
-      </View>
+      <Slider
+        value={value}
+        onValueChange={setValue}
+        maximumValue={10}
+        minimumValue={0}
+        step={1}
+        allowTouchTrack
+        trackStyle={{ height: 5, backgroundColor: 'transparent' }}
+        thumbStyle={{ height: 20, width: 20, backgroundColor: 'blue' }}
+        thumbProps={{
+          children: (
+            <Icon
+              name="thermometer"
+              type="font-awesome"
+              size={20}
+              reverse
+              containerStyle={{ bottom: 20, right: 20 }}
+              color={color()}
+            />
+          ),
+        }}
+      />
+      <Text style={styles.value}>{sliderValue2}</Text>
+    </View>
 
       <View style={styles.sliderContainer}>
-        <Text style={styles.label}>Parameter 3</Text>
+        <Text style={styles.label}>Klimatop</Text>
         <Slider
           style={styles.slider}
           minimumValue={0}
@@ -55,8 +81,8 @@ export default function SettingsMenu() {
 
       <View style={styles.statisticsContainer}>
         <Text style={styles.statisticsHeader}>Statistics</Text>
-        <Text style={styles.statisticsText}>Total Value: {totalValue}</Text>
-        <Text style={styles.statisticsText}>Average Value: {averageValue.toFixed(2)}</Text>
+        <Text style={styles.statisticsText}>Highest Temperature {someValue}</Text>
+        <Text style={styles.statisticsText}>Current Location {someOtherValue}</Text>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -70,7 +96,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '3293a8',
   },
   header: {
     fontSize: 24,
