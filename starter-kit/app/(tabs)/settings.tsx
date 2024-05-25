@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet, Button, Alert } from 'react-native';
 import { Slider } from '@rneui/themed';
 
 export default function SettingsMenu() {
@@ -60,7 +60,7 @@ export default function SettingsMenu() {
       </View>
 
       <View style={styles.buttonContainer}>
-        <Button title="Save Settings" onPress={() => alert('Settings Saved!')} />
+        <Button title="Save Settings" onPress={() => Alert.alert('Settings Saved!')} />
       </View>
     </View>
   );
