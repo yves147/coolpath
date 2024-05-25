@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #inputs {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            z-index: 1000;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            width: 200px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+
+    <script>
+        L_NO_TOUCH = false;
+        L_DISABLE_3D = false;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+
+    <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <title>CoolPath</title>
+
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="inputs">
+    <div class="input-group">
+        <input type="text" id="startLocation" placeholder="Start Location">
+        <button id="startButton">Set Start</button>
+    </div>
+    <div class="input-group">
+        <input type="text" id="endLocation" placeholder="End Location">
+        <button id="endButton">Set End</button>
+    </div>
+</div>
+
+
+</body>
+<script>
+    var map = L.map(
+        "map",
+        {
+            center: [51.02841663106986, 13.7598230978543],
+            crs: L.CRS.EPSG3857,
+            zoom: 12,
+            zoomControl: true,
+            preferCanvas: false,
+        }
+    );
+
+    var startLocationEnabled = false;
+    var startMarker = null;
+    var endLocationEnabled = false;
+    var endMarker = null;
+
+    var routeMarkers = [];
+
+    document.getElementById('startButton').addEventListener('click', function() {
+        startLocationEnabled = true;
+        endLocationEnabled = false;
+    });
+
+    document.getElementById('endButton').addEventListener('click', function() {
+        endLocationEnabled = true;
+        startLocationEnabled = false;
+    });
+
+
+    map.on('click', function(e){
+        var coord = e.latlng;
+        var lat = coord.lat;
+        var lng = coord.lng;
+
+        console.log("You clicked the map at latitude: " + lat + " and longitude: " + lng);
+
+        if(startLocationEnabled) {
+            if(startMarker != null)
+                map.removeLayer(startMarker);
+
+            startMarker = L.marker(e.latlng, {}).addTo(map);
+            startLocationEnabled = false;
+        }
+
+        if(endLocationEnabled) {
+            if(endMarker != null)
+                map.removeLayer(endMarker);
+
+            endMarker = L.marker(e.latlng, {}).addTo(map);
+            endLocationEnabled = false;
+        }
+
+        if(startMarker != null && endMarker != null) {
+            startMarkerPos = startMarker.getLatLng();
+            endMarkerPos = endMarker.getLatLng();
+
+            $.ajax({
+              url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}`,
+              method: 'GET',
+              success: function(response) {
+
+                console.log("routeMarkers", routeMarkers);
+
+                routeMarkers.forEach((element) => map.removeLayer(element));
+
+                routeMarkers = [];
+
+                response.forEach((element) => {
+                    marker = L.marker([element.latitude, element.longitude], {}).addTo(map);
+                    routeMarkers.push(marker)
+                });
+              },
+              error: function(xhr, status, error) {
+                console.error(error);
+              }
+            });
+        }
+    });
+
+    var tile_layer_1220d4919f86b1d18997f842be67a06d = L.tileLayer(
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+    );
+
+
+    tile_layer_1220d4919f86b1d18997f842be67a06d.addTo(map);
+
+
+
+</script>
+</html>
