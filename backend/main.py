@@ -3,6 +3,9 @@ import heapq
 import unicodedata
 from typing import Optional
 
+from timeit import default_timer as timer
+
+from generate_graph import Map, Node
 from path_weight import trapeziodal_integral
 
 
@@ -111,7 +114,7 @@ def get_neighbours(point: list[float], feature: Optional[dict], json_data: dict)
     return neighbours
 
 
-def find_path(start: list[float], end: list[float], json_data) -> list[list[float]]:
+def find_path(start: list[float], end: list[float], map_object: Map) -> list[list[float]]:
     open_list = []
     g_scores = {tuple(start): 0}
     parent = {}
@@ -134,9 +137,11 @@ def find_path(start: list[float], end: list[float], json_data) -> list[list[floa
             return path
 
         # Get the neighbors of the current node using the provided function
-        neighbors = get_neighbours(list(current_node), None, json_data)
+        # neighbors = get_neighbours(list(current_node), None, json_data)
+        neighbors = map_object.connections[Node(list(current_node)).get_hash()]
 
-        for (feature, neighbor) in neighbors:
+        for neighbor in neighbors:
+            neighbor = neighbor.point
             if tuple(neighbor) not in g_scores:
                 g_scores[tuple(neighbor)] = float('inf')
 
@@ -155,3 +160,24 @@ def find_path(start: list[float], end: list[float], json_data) -> list[list[floa
 
     # If no path is found, return an empty list
     return []
+
+
+if __name__ == "__main__":
+    start_point = [13.732952417266883, 51.03403674195253]
+    end_point = [13.751770840358994, 51.06299305729817]
+
+    start = timer()
+
+    map = Map.load_from_file()
+
+    map_node = map.get_node(Node(start_point).get_hash())
+
+    print(map_node)
+
+    found_path = find_path(start_point, end_point, Map.load_from_file())
+
+    end = timer()
+
+    print(found_path)
+
+    print(end - start)
