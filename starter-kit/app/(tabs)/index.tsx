@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Image, View, Platform } from 'react-native';
 import { Button, SearchBar, Card } from '@rneui/themed';
 import { ThemedText } from '../../components/ThemedText';
@@ -8,6 +8,7 @@ import { Link } from 'react-router-native';
 import { WebView } from 'react-native-webview';
 import { HTMLContent } from '../../components/Webmap.js';
 import axios from 'axios'
+import Geolocation from "@react-native-community/geolocation";
 
 const MapPageContent = () => {
   const webviewRef = useRef(null);
@@ -23,7 +24,7 @@ const MapPageContent = () => {
           lng: response.data[i].longitude,
         });*/
         points.push([response.data[i].latitude,response.data[i].longitude])
-    
+        
         
       }
       const message = JSON.stringify({
@@ -63,7 +64,9 @@ const MapPageContent = () => {
         style={styles.webview}
         source={{ html: HTMLContent }}
       />
-      <Button title="Marker hinzufügen" onPress={addMarker} />
+      <Button title="Marker hinzufügen" onPress={addMarker} titleStyle={{
+       fontSize: 30,
+   }} />
     </View>
   );
 };

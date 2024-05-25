@@ -31,17 +31,18 @@ const HTMLContent = `
               attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            L.marker([51.05089, 13.73832]).addTo(map)
-             .bindPopup('Dresden die Hood!')
-             .openPopup();
+            //L.marker([51.05089, 13.73832]).addTo(map)
+            //.bindPopup('Dresden die Hood!')
+            //.openPopup();
 
             // Listen for messages from React Native
             document.addEventListener("message", function(event) {
                 var data = JSON.parse(event.data);
                 if (data.type === 'line') {
-                    L.polyline(data.pnts, {color: 'red', weight: 10}).addTo(map)
-                     .bindPopup(data.popupText)
-                     .openPopup();
+                    L.polyline(data.pnts, {color: 'red', weight: 6}).addTo(map)
+                    L.marker(data.pnts[0], {color: 'blue'}).addTo(map)
+                    L.marker(data.pnts[data.pnts.length-1], {color: 'green'}).addTo(map)
+                    L.circleMarker(data.pnts[54], {weight:1, fillColor: 'red'}).addTo(map)
                 }
             });
         </script>
