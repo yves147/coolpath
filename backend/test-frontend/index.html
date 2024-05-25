@@ -46,6 +46,14 @@
             color: white;
             cursor: pointer;
         }
+
+        .paramSlider {
+            opacity: 0.7
+		}
+
+        .paramSlider:hover {
+            opacity: 1.0
+        }
     </style>
 
     <script>
@@ -85,6 +93,9 @@
         <input type="text" id="endLocation" placeholder="End Location">
         <button id="endButton">Set End</button>
     </div>
+	<div class="input-group">
+        <input type="range" id="climatopeWeight" class="paramSlider" min="0" max="10" step="0.5" value="2" />
+	</div>
 </div>
 
 
@@ -106,7 +117,37 @@
     var endLocationEnabled = false;
     var endMarker = null;
 
+    var climatopeWeight = Number.parseFloat(document.getElementById("climatopeWeight").value);
+
     var routeMarkers = [];
+
+    function refreshPath() {
+        if(!startMarker || !endMarker) {
+            return;
+        }
+
+        startMarkerPos = startMarker.getLatLng();
+        endMarkerPos = endMarker.getLatLng();
+
+        $.ajax({
+            url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}&climatope_weight=${climatopeWeight}`,
+            method: 'GET',
+            success: function(response) {
+                console.log("routeMarkers", routeMarkers);
+
+                routeMarkers.forEach((element) => map.removeLayer(element));
+                routeMarkers = [];
+
+                response.forEach((element) => {
+                    marker = L.marker([element.latitude, element.longitude], {}).addTo(map);
+                    routeMarkers.push(marker);
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
+            }
+        });
+    }
 
     document.getElementById('startButton').addEventListener('click', function() {
         startLocationEnabled = true;
@@ -118,6 +159,10 @@
         startLocationEnabled = false;
     });
 
+    document.getElementById('climatopeWeight').addEventListener('input', (event) => {
+        climatopeWeight = Number.parseFloat(event.target.value);
+        refreshPath();
+    });
 
     map.on('click', function(e){
         var coord = e.latlng;
@@ -143,29 +188,7 @@
         }
 
         if(startMarker != null && endMarker != null) {
-            startMarkerPos = startMarker.getLatLng();
-            endMarkerPos = endMarker.getLatLng();
-
-            $.ajax({
-              url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}`,
-              method: 'GET',
-              success: function(response) {
-
-                console.log("routeMarkers", routeMarkers);
-
-                routeMarkers.forEach((element) => map.removeLayer(element));
-
-                routeMarkers = [];
-
-                response.forEach((element) => {
-                    marker = L.marker([element.latitude, element.longitude], {}).addTo(map);
-                    routeMarkers.push(marker)
-                });
-              },
-              error: function(xhr, status, error) {
-                console.error(error);
-              }
-            });
+            refreshPath();
         }
     });
 
