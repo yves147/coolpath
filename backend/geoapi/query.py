@@ -1,6 +1,7 @@
 from datetime import datetime
 import math
 from operator import itemgetter
+import os
 
 from PIL.Image import ImagePointHandler
 
@@ -8,7 +9,8 @@ from .klips_connector import downloadLayerAtTime, getBoundingBox, Layer
 
 
 def logMsg(msg):
-    print(f"[{__name__}] {msg}")
+    if "LOGGING" in os.environ:
+        print(f"[{__name__}] {msg}")
 
 
 def getLayerSpaceTimePixel(layer: Layer, lat: float, lon: float, time: datetime):

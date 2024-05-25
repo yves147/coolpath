@@ -23,7 +23,8 @@ class Layer(StrEnum):
 
 
 def logMsg(msg):
-    print(f"[{__name__}] {msg}")
+    if "LOGGING" in os.environ:
+        print(f"[{__name__}] {msg}")
 
 
 def getLayerTimeKey(layerName: str, time: datetime):

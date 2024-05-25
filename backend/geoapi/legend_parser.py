@@ -19,7 +19,8 @@ __layerColorTempMap__: dict[Layer, tuple[NDArray, list]] = {}
 
 
 def logMsg(msg):
-    print(f"[{__name__}] {msg}")
+    if "LOGGING" in os.environ:
+        print(f"[{__name__}] {msg}")
 
 
 def extractColorsAndTemperatures(layer: Layer):
@@ -75,7 +76,9 @@ def closestTemperature(inputColor, colors, temperatures):
 def convertColorToTemperature(layer: Layer, pixel: tuple[int, int, int] | tuple[int, int, int, int]):
     pixelWithoutAlpha = pixel[:3]
     colors, temperatures = extractColorsAndTemperatures(layer)
-    return closestTemperature(pixelWithoutAlpha, colors, temperatures)
+    temperature = closestTemperature(pixelWithoutAlpha, colors, temperatures)
+    logMsg(f"Returning temperature: {temperature:.2f} °C")
+    return temperature
 
 
 def main():
