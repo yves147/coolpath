@@ -2,9 +2,10 @@
 import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
+from starlette.middleware.cors import CORSMiddleware
 
 from generate_graph import Map, Node  # noqa
-from main import find_path
+from main import find_path, get_nearest_node_from_coordinates
 
 map_object = Map.load_from_file()
 
@@ -31,9 +32,14 @@ def search_pos(
     target_lat: float = 51.06299305729817,
 ) -> list[Location]:
 
+    map_object.nodes.values()
+
+    start_node = get_nearest_node_from_coordinates(start_long, start_lat, map_object)
+    end_node = get_nearest_node_from_coordinates(target_long, target_lat, map_object)
+
     found_path = find_path(
-        [start_long, start_lat],
-        [target_long, target_lat],
+        [start_node.longitude, start_node.latitude],
+        [end_node.longitude, end_node.latitude],
         map_object,
     )
 
@@ -42,9 +48,13 @@ def search_pos(
     return locations
 
 
-@app.post("/recommend")
-def calculate_path():
-    return {}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:63342"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 if __name__ == "__main__":

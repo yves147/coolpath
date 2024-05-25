@@ -1,4 +1,9 @@
-from main import get_neighbours, get_neighbours_only_inside_feature
+from generate_graph import Node, Map
+from main import (
+    get_neighbours,
+    get_neighbours_only_inside_feature,
+    get_nearest_node_from_coordinates,
+)
 
 
 def test_get_neighbours_middle():
@@ -12,9 +17,9 @@ def test_get_neighbours_middle():
 
     neighbours = get_neighbours(point, feature, json_data)
 
-    assert (len(neighbours) == 2)
-    assert (neighbours[0][1] == first_point)
-    assert (neighbours[1][1] == last_point)
+    assert len(neighbours) == 2
+    assert neighbours[0][1] == first_point
+    assert neighbours[1][1] == last_point
 
 
 def test_get_neighbours_first():
@@ -27,8 +32,8 @@ def test_get_neighbours_first():
 
     neighbours = get_neighbours(point, feature, json_data)
 
-    assert (len(neighbours) == 1)
-    assert (neighbours[0][1] == last_point)
+    assert len(neighbours) == 1
+    assert neighbours[0][1] == last_point
 
 
 def test_get_neighbours_last():
@@ -41,8 +46,8 @@ def test_get_neighbours_last():
 
     neighbours = get_neighbours(point, feature, json_data)
 
-    assert (len(neighbours) == 1)
-    assert (neighbours[0][1] == first_point)
+    assert len(neighbours) == 1
+    assert neighbours[0][1] == first_point
 
 
 def test_get_neighbours_only_inside_feature():
@@ -54,6 +59,20 @@ def test_get_neighbours_only_inside_feature():
 
     neighbours = get_neighbours_only_inside_feature(point, feature)
 
-    assert (len(neighbours) == 2)
-    assert (neighbours[0][1] == first_point)
-    assert (neighbours[1][1] == last_point)
+    assert len(neighbours) == 2
+    assert neighbours[0][1] == first_point
+    assert neighbours[1][1] == last_point
+
+
+def test_get_nearest_node_from_coordinates():
+    closestNode = Node([0, 1])
+    otherNode = Node([5, 1])
+
+    map_object = Map()
+
+    map_object.add_node(closestNode)
+    map_object.add_node(otherNode)
+
+    returned_node = get_nearest_node_from_coordinates(0, 1, map_object)
+
+    assert returned_node == closestNode

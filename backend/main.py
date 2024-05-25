@@ -68,6 +68,13 @@ def calculate_heuristic(start_point: list[float], end_point: list[float]):
     return abs(start_point[0] - end_point[0]) + abs(start_point[1] - end_point[1])
 
 
+def get_nearest_node_from_coordinates(long: float, lat: float, map_object: Map):
+    return min(
+        map_object.nodes.values(),
+        key=lambda n: (long - n.longitude) ** 2 + (lat - n.latitude) ** 2,
+    )
+
+
 def get_neighbours_only_inside_feature(
     point: list[float], feature: dict
 ) -> list[(dict, list[float])]:
