@@ -14,6 +14,7 @@ from owslib.wms import WebMapService
 __wmsUrl__ = "https://klips-dev.terrestris.de/geoserver/ows"
 __wmsVersion__ = "1.3.0"
 __wms__ = None
+__layerImageMap__: dict[str, Image.Image] = {}
 
 
 class Layer(StrEnum):
@@ -22,6 +23,10 @@ class Layer(StrEnum):
 
 def logMsg(msg):
     print(f"[{__name__}] {msg}")
+
+
+def getLayerTimeKey(layerName: str, time: datetime):
+    return f"{layerName}\0{time.strftime('%Y%m%d%H')}"
 
 
 def getWms() -> WebMapService_1_3_0:
@@ -52,7 +57,11 @@ def distanceInMBetweenEarthCoords(lat1, lon1, lat2, lon2):
     return earthRadiusKm * c * 1000
 
 
-def getBoundingBox(layer: ContentMetadata):
+def getBoundingBox(layer: ContentMetadata | str):
+    if isinstance(layer, str):
+        wms = getWms()
+        layer = typing.cast(ContentMetadata, wms[layer])
+
     bbox = typing.cast(tuple[float, float, float, float], layer.boundingBoxWGS84)
     return {"top": bbox[3], "right": bbox[2], "bottom": bbox[1], "left": bbox[0]}
 
@@ -83,22 +92,33 @@ def getTimeFrameOfLayer(layer: ContentMetadata):
 
 
 def downloadLayerAtTime(layerName: str, time: datetime):
-    logMsg(f"Downloading {layerName} at {time.strftime('%d/%m/%Y %H:%M:%S')} ...")
+    global __layerImageMap__
 
     # Get basic data
     wms = getWms()
     layer: ContentMetadata = wms[layerName]
 
-    boundingBox = getBoundingBox(layer)
-    imageDimensions = getSizeFromBoundingBox(boundingBox, res=10)
-    startDate, endDate = getTimeFrameOfLayer(layer)
-
-    if time < startDate or time > endDate:
-        raise RuntimeError(f"Given time {str(time)} is not within [{str(startDate)}, {str(endDate)}]")
-
+    # Truncate given time (no minutes or seconds supported)
     if time.minute != 0 or time.second != 0:
         logMsg(f"Given time has non-zero minutes ({time.minute}) or seconds ({time.second}), setting them to zero")
         time = time.replace(minute=0, second=0)
+
+    # Confirm that the time is valid
+    startDate, endDate = getTimeFrameOfLayer(layer)
+    if time < startDate or time > endDate:
+        raise RuntimeError(f"Given time {str(time)} is not within [{str(startDate)}, {str(endDate)}]")
+
+    # Check if the image is already cached
+    key = getLayerTimeKey(layerName, time)
+    if key in __layerImageMap__:
+        logMsg(f"Returning \"{layerName}\" at {time.strftime('%d/%m/%Y %H:%M:%S')} from cache")
+        return __layerImageMap__[key]
+
+    # Image is not yet cached → download and cache it
+    logMsg(f"Downloading \"{layerName}\" at {time.strftime('%d/%m/%Y %H:%M:%S')} ...")
+
+    boundingBox = getBoundingBox(layer)
+    imageDimensions = getSizeFromBoundingBox(boundingBox, res=10)
 
     # Download PNG
     response = wms.getmap(layers=[str(Layer.PERCEIVED_TEMPERATURE)],
@@ -108,7 +128,12 @@ def downloadLayerAtTime(layerName: str, time: datetime):
                           size=imageDimensions,
                           format="image/png",
                           transparent=True)
-    return Image.open(BytesIO(response.read()))
+
+    # Cache the image
+    image = Image.open(BytesIO(response.read())).convert("RGBA")
+    __layerImageMap__[key] = image
+
+    return image
 
 
 def makeSurePathExists(path):
@@ -119,6 +144,8 @@ def makeSurePathExists(path):
             raise
 
 
+# Main function: if this module is executed directly, download all heat layers from summer 2023 and store them in
+# /tmp/klips
 def main():
     # Initialize WMS service connection
     wms = getWms()
@@ -163,7 +190,7 @@ def main():
         ptIterDate += ptTimeResolution
 
     # All done :)
-    print("Yay! Done!")
+    print("Done!")
 
 
 if __name__ == "__main__":
