@@ -1,13 +1,9 @@
 # fastapi dev server.py
 
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
 
-app = FastAPI(title="CoolPath API")
+app = FastAPI(title="CoolPath API", docs_url="/")
 
-@app.get("/")
-def read_root():
-    return RedirectResponse("/openapi.json")
 
 @app.get("/search")
 def search_pos(query: str):
