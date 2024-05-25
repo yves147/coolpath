@@ -1,3 +1,4 @@
+
 import math
 
 def coords_to_distance(coords_list: list[tuple[float,float]]) -> tuple[float,tuple[float,float]]:
@@ -38,18 +39,19 @@ def function_at_distance(distance, coords_list: list[tuple[float,tuple[float,flo
     for el in coords_list[1:]:
         d += el[0]
         if distance <= d:
-            coords = tuple(map(lambda i,j:i+j, last_el[1],
-                               tuple(map(lambda i,j: i*j,
-                                         2*[distance-(d-el[0])],
-                                         tuple(map(lambda i,j:i-j, el[1],
-                                               last_el[1]))))))
-            #print(coords)
-            return function_at_coords(coords[0], coords[1])
+            last_coords = last_el[1]
+            current_coords = el[1]
+            distance_ratio = (distance - (d - el[0])) / (el[0] - last_el[0])
+
+            interp_x = last_coords[0] + (current_coords[0] - last_coords[0]) * distance_ratio
+            interp_y = last_coords[1] + (current_coords[1] - last_coords[1]) * distance_ratio
+            
+            return function_at_coords(interp_x, interp_y)
 
 def trapeziodal_integral(coords_list: list[tuple[float,float]] = list(), T: float = 0, n: int = 1024):
     if len(coords_list) == 2:
         T = math.sqrt(pow(coords_list[0][0] - coords_list[1][0], 2) + pow(coords_list[0][1] - coords_list[1][1], 2))
-        n = 4 * (int(T) + 1)
+        n = 2 * (int(T) + 1)
         distance_coords_list = [(0, coords_list[0]), (T, coords_list[1])]
     else:
         distance_coords_list = coords_to_distance(coords_list)
