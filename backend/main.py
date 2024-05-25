@@ -1,9 +1,8 @@
 import heapq
-
-import unicodedata
+from timeit import default_timer as timer
 from typing import Optional
 
-from timeit import default_timer as timer
+import unicodedata
 
 from generate_graph import Map, Node
 from path_weight import trapeziodal_integral
@@ -12,8 +11,8 @@ from path_weight import trapeziodal_integral
 def get_feature_by_start_point(start_point: list[float], json_data: dict) -> list[dict]:
     features = []
 
-    for feature in json_data['features']:
-        if feature['geometry']['coordinates'][0] == start_point:
+    for feature in json_data["features"]:
+        if feature["geometry"]["coordinates"][0] == start_point:
             features.append(feature)
 
     return features
@@ -22,8 +21,8 @@ def get_feature_by_start_point(start_point: list[float], json_data: dict) -> lis
 def get_features_by_end_point(end_point: list[float], json_data: dict) -> list[dict]:
     features = []
 
-    for feature in json_data['features']:
-        if feature['geometry']['coordinates'][-1] == end_point:
+    for feature in json_data["features"]:
+        if feature["geometry"]["coordinates"][-1] == end_point:
             features.append(feature)
 
     return features
@@ -32,13 +31,13 @@ def get_features_by_end_point(end_point: list[float], json_data: dict) -> list[d
 def get_features_by_point(point: list[float], json_data: dict) -> list[dict]:
     features = []
 
-    for feature in json_data['features']:
+    for feature in json_data["features"]:
         #        if len(feature["geometry"]["coordinates"]) == 0:
         #            continue
 
         #        if feature['geometry']['coordinates'][0] == point or feature['geometry']['coordinates'][-1] == point:
         #            features.append(feature)
-        for current_point in feature['geometry']['coordinates']:
+        for current_point in feature["geometry"]["coordinates"]:
             if current_point == point:
                 features.append(feature)
                 continue
@@ -57,8 +56,8 @@ def caseless_equal(left, right):
 def get_features_by_street_name(street_name: str, json_data: dict) -> any:
     streets = []
 
-    for feature in json_data['features']:
-        if caseless_equal(feature['properties']['strasse'], street_name):
+    for feature in json_data["features"]:
+        if caseless_equal(feature["properties"]["strasse"], street_name):
             streets.append(feature)
 
     return streets
@@ -69,7 +68,9 @@ def calculate_heuristic(start_point: list[float], end_point: list[float]):
     return abs(start_point[0] - end_point[0]) + abs(start_point[1] - end_point[1])
 
 
-def get_neighbours_only_inside_feature(point: list[float], feature: dict) -> list[(dict, list[float])]:
+def get_neighbours_only_inside_feature(
+    point: list[float], feature: dict
+) -> list[(dict, list[float])]:
     coordinates = feature["geometry"]["coordinates"]
 
     coordinates_index = coordinates.index(point)
@@ -85,7 +86,9 @@ def get_neighbours_only_inside_feature(point: list[float], feature: dict) -> lis
     return neighbours
 
 
-def get_neighbours(point: list[float], feature: Optional[dict], json_data: dict) -> list[(dict, list[float])]:
+def get_neighbours(
+    point: list[float], feature: Optional[dict], json_data: dict
+) -> list[(dict, list[float])]:
     if feature is None:
         feature = get_features_by_point(point, json_data)[0]
 
@@ -101,7 +104,9 @@ def get_neighbours(point: list[float], feature: Optional[dict], json_data: dict)
         neighbour_features = get_features_by_point(point, json_data)
 
         for neighbour_feature in neighbour_features:
-            neighbours.extend(get_neighbours_only_inside_feature(point, neighbour_feature))
+            neighbours.extend(
+                get_neighbours_only_inside_feature(point, neighbour_feature)
+            )
 
     if coordinates_index < len(coordinates) - 1:
         neighbours.append((feature, coordinates[coordinates_index + 1]))
@@ -109,12 +114,16 @@ def get_neighbours(point: list[float], feature: Optional[dict], json_data: dict)
         neighbour_features = get_features_by_point(point, json_data)
 
         for neighbour_feature in neighbour_features:
-            neighbours.extend(get_neighbours_only_inside_feature(point, neighbour_feature))
+            neighbours.extend(
+                get_neighbours_only_inside_feature(point, neighbour_feature)
+            )
 
     return neighbours
 
 
-def find_path(start: list[float], end: list[float], map_object: Map) -> list[list[float]]:
+def find_path(
+    start: list[float], end: list[float], map_object: Map
+) -> list[list[float]]:
     open_list = []
     g_scores = {tuple(start): 0}
     parent = {}
@@ -143,14 +152,16 @@ def find_path(start: list[float], end: list[float], map_object: Map) -> list[lis
         for neighbor in neighbors:
             neighbor = neighbor.point
             if tuple(neighbor) not in g_scores:
-                g_scores[tuple(neighbor)] = float('inf')
+                g_scores[tuple(neighbor)] = float("inf")
 
             if current_node not in g_scores:
-                g_scores[current_node] = float('inf')
+                g_scores[current_node] = float("inf")
 
             if g_scores[current_node] + 1 < g_scores[tuple(neighbor)]:
                 # Update the neighbor's g score and f score
-                g_scores[tuple(neighbor)] = g_scores[current_node] + trapeziodal_integral([current_node, neighbor])
+                g_scores[tuple(neighbor)] = g_scores[
+                    current_node
+                ] + trapeziodal_integral([current_node, neighbor])
                 f_score = g_scores[tuple(neighbor)] + calculate_heuristic(neighbor, end)
 
                 if (f_score, tuple(neighbor)) not in open_list:
