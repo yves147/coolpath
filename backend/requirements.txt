@@ -1,4 +1,5 @@
 fastapi # backend web server
 OWSLib # parse geoserver WMS data
+Pillow # image library
 pytest # unit test
 folium # debug map generation
