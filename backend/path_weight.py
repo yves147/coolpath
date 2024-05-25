@@ -40,7 +40,7 @@ def climatope_at_coords(lon, lat) -> float:
 
     return climateCategory
 
-def function_at_coords(lat, long, parameters = dict(temperature_alpha = 1, windspeed_beta=0.2, perceived_gamma=0.4, climatope_zeta=0.3)) -> float:
+def function_at_coords(lat, long, parameters = dict(temperature_alpha = 1, windspeed_beta=0.2, perceived_gamma=0.4, climatope_zeta=2.0)) -> float:
     return parameters["temperature_alpha"] * temperature_at_coords(lat, long) + \
             parameters["windspeed_beta"] * average_windspeed_at_coords(lat, long) + \
             parameters["perceived_gamma"] * perceived_temperature_at_coords(lat, long) + \
