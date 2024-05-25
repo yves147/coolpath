@@ -30,11 +30,11 @@ def get_features_by_point(point: list[float], json_data: dict) -> list[dict]:
     features = []
 
     for feature in json_data['features']:
-#        if len(feature["geometry"]["coordinates"]) == 0:
-#            continue
+        #        if len(feature["geometry"]["coordinates"]) == 0:
+        #            continue
 
-#        if feature['geometry']['coordinates'][0] == point or feature['geometry']['coordinates'][-1] == point:
-#            features.append(feature)
+        #        if feature['geometry']['coordinates'][0] == point or feature['geometry']['coordinates'][-1] == point:
+        #            features.append(feature)
         for current_point in feature['geometry']['coordinates']:
             if current_point == point:
                 features.append(feature)
@@ -145,7 +145,7 @@ def find_path(start: list[float], end: list[float], json_data) -> list[list[floa
 
             if g_scores[current_node] + 1 < g_scores[tuple(neighbor)]:
                 # Update the neighbor's g score and f score
-                g_scores[tuple(neighbor)] = g_scores[current_node] + 1
+                g_scores[tuple(neighbor)] = g_scores[current_node] + trapeziodal_integral([current_node, neighbor])
                 f_score = g_scores[tuple(neighbor)] + calculate_heuristic(neighbor, end)
 
                 if (f_score, tuple(neighbor)) not in open_list:
@@ -155,18 +155,3 @@ def find_path(start: list[float], end: list[float], json_data) -> list[list[floa
 
     # If no path is found, return an empty list
     return []
-
-
-import json
-
-start_point = [13.736975484488212, 51.06307837490126]
-end_point = [13.74074625406342,51.05907939552469]
-
-with open("daten.json", encoding='utf-8') as f:
-    json_data = json.load(f)
-
-print("loaded")
-
-found_path = find_path(start_point, end_point, json_data)
-
-print(found_path)
