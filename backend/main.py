@@ -129,7 +129,11 @@ def get_neighbours(
 
 
 def find_path(
-    start: list[float], end: list[float], map_object: Map
+    start: list[float],
+    end: list[float],
+    map_object: Map,
+    perceived_gamma: float = 0.4,
+    climatope_zeta: float = 2.0,
 ) -> list[list[float]]:
     open_list = []
     g_scores = {tuple(start): 0}
@@ -168,7 +172,11 @@ def find_path(
                 # Update the neighbor's g score and f score
                 g_scores[tuple(neighbor)] = g_scores[
                     current_node
-                ] + trapeziodal_integral([current_node, neighbor])
+                ] + trapeziodal_integral(
+                    [current_node, neighbor],
+                    perceived_gamma=perceived_gamma,
+                    climatope_zeta=climatope_zeta,
+                )
                 f_score = g_scores[tuple(neighbor)] + calculate_heuristic(neighbor, end)
 
                 if (f_score, tuple(neighbor)) not in open_list:

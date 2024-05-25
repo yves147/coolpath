@@ -34,6 +34,8 @@ def search_pos(
     start_lat: float = 51.03403674195253,
     target_long: float = 13.751770840358994,
     target_lat: float = 51.06299305729817,
+    perceived_gamma: float = 0.4,
+    climatope_zeta: float = 2.0,
 ) -> list[Location]:
 
     map_object.nodes.values()
@@ -45,6 +47,8 @@ def search_pos(
         [start_node.longitude, start_node.latitude],
         [end_node.longitude, end_node.latitude],
         map_object,
+        perceived_gamma=perceived_gamma,
+        climatope_zeta=climatope_zeta,
     )
 
     locations = [Location.from_list_of_points(point) for point in found_path]
