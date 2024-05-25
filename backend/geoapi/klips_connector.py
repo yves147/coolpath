@@ -14,6 +14,7 @@ from owslib.wms import WebMapService
 __wmsUrl__ = "https://klips-dev.terrestris.de/geoserver/ows"
 __wmsVersion__ = "1.3.0"
 __wms__ = None
+
 __layerImageMap__: dict[str, Image.Image] = {}
 
 
