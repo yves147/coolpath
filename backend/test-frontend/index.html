@@ -54,6 +54,11 @@
         .paramSlider:hover {
             opacity: 1.0
         }
+
+        .paramSliderLabel {
+            opacity: 0.7;
+            margin-right: 1rem;
+        }
     </style>
 
     <script>
@@ -86,15 +91,20 @@
 
 <div id="inputs">
     <div class="input-group">
-        <input type="text" id="startLocation" placeholder="Start Location">
-        <button id="startButton">Set Start</button>
+        <input type="text" id="startLocation" placeholder="Start">
+        <button id="startButton">Start setzen</button>
     </div>
     <div class="input-group">
-        <input type="text" id="endLocation" placeholder="End Location">
-        <button id="endButton">Set End</button>
+        <input type="text" id="endLocation" placeholder="Ziel">
+        <button id="endButton">Ziel setzen</button>
+    </div>
+    <div class="input-group">
+        <label for="percTempWeight" class="paramSliderLabel">G.-Temp.-Gewichtung:</label>
+        <input type="range" id="percTempWeight" class="paramSlider" min="0.1" max="10" step="0.1" value="0.5" />
     </div>
 	<div class="input-group">
-        <input type="range" id="climatopeWeight" class="paramSlider" min="0" max="10" step="0.5" value="2" />
+        <label for="climatopeWeight" class="paramSliderLabel">Klimatop-Gewichtung:</label>
+        <input type="range" id="climatopeWeight" class="paramSlider" min="0.1" max="10" step="0.1" value="1.8" />
 	</div>
 </div>
 
@@ -117,36 +127,52 @@
     var endLocationEnabled = false;
     var endMarker = null;
 
+    var percTempWeight = Number.parseFloat(document.getElementById("percTempWeight").value);
     var climatopeWeight = Number.parseFloat(document.getElementById("climatopeWeight").value);
 
     var routeMarkers = [];
 
-    function refreshPath() {
+    var runningXhr = null;
+    var refreshTimer = null;
+
+    function refreshPath(delay = 300) {
+        if(refreshTimer) {
+            clearTimeout(refreshTimer);
+        }
+
         if(!startMarker || !endMarker) {
             return;
         }
 
-        startMarkerPos = startMarker.getLatLng();
-        endMarkerPos = endMarker.getLatLng();
-
-        $.ajax({
-            url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}&climatope_weight=${climatopeWeight}`,
-            method: 'GET',
-            success: function(response) {
-                console.log("routeMarkers", routeMarkers);
-
-                routeMarkers.forEach((element) => map.removeLayer(element));
-                routeMarkers = [];
-
-                response.forEach((element) => {
-                    marker = L.marker([element.latitude, element.longitude], {}).addTo(map);
-                    routeMarkers.push(marker);
-                });
-            },
-            error: function(xhr, status, error) {
-                console.error(error);
+        refreshTimer = setTimeout(() => {
+            if(runningXhr && runningXhr.readyState !== 4) {
+                runningXhr.abort();
             }
-        });
+
+            startMarkerPos = startMarker.getLatLng();
+            endMarkerPos = endMarker.getLatLng();
+
+            runningXhr = $.ajax({
+                url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}&perceived_gamma=${percTempWeight}&climatope_zeta=${climatopeWeight}`,
+                method: 'GET',
+                success: function(response) {
+                    runningXhr = null;
+                    console.log("routeMarkers", routeMarkers);
+
+                    routeMarkers.forEach((element) => map.removeLayer(element));
+                    routeMarkers = [];
+
+                    response.forEach((element) => {
+                        marker = L.marker([element.latitude, element.longitude], {}).addTo(map);
+                        routeMarkers.push(marker);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    runningXhr = null;
+                    console.error(error);
+                }
+            });
+        }, delay);
     }
 
     document.getElementById('startButton').addEventListener('click', function() {
@@ -157,6 +183,11 @@
     document.getElementById('endButton').addEventListener('click', function() {
         endLocationEnabled = true;
         startLocationEnabled = false;
+    });
+
+    document.getElementById('percTempWeight').addEventListener('input', (event) => {
+        percTempWeight = Number.parseFloat(event.target.value);
+        refreshPath();
     });
 
     document.getElementById('climatopeWeight').addEventListener('input', (event) => {
