@@ -1,6 +1,10 @@
 # python server.py
+from typing import Optional
+
 import uvicorn
 from fastapi import FastAPI
+from geopy import Point
+from geopy.geocoders import Nominatim
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 
@@ -55,6 +59,53 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/similar_addresses")
+def get_similar_addresses(search_string: str):
+    geolocator = Nominatim(user_agent="cool-path")
+
+    # Coordinates for bounding box around Dresden
+    southwest = Point(51.0000, 13.6000)
+    northeast = Point(51.1500, 13.8000)
+
+    results = geolocator.geocode(
+        search_string,
+        exactly_one=False,
+        limit=10,
+        viewbox=[southwest, northeast],
+        bounded=True,
+        country_codes="de",
+        language="de-DE",
+    )
+    if results:
+        suggestions = [result.address for result in results]
+        return suggestions
+    else:
+        return []
+
+
+@app.get("/coordinate_from_address")
+def get_coordinates_from_address(search_string: str) -> Optional[Location]:
+    geolocator = Nominatim(user_agent="cool-path")
+
+    # Coordinates for bounding box around Dresden
+    southwest = Point(51.0000, 13.6000)
+    northeast = Point(51.1500, 13.8000)
+
+    result = geolocator.geocode(
+        search_string,
+        exactly_one=True,
+        viewbox=[southwest, northeast],
+        bounded=True,
+        country_codes="de",
+        language="de-DE",
+    )
+
+    if not result:
+        return None
+
+    return Location(longitude=result.longitude, latitude=result.latitude)
 
 
 if __name__ == "__main__":
