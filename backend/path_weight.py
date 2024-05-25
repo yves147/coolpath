@@ -1,7 +1,7 @@
 from datetime import datetime
 import math
 
-from geoapi import convertColorToTemperature, getLayerSpaceTimePixel, Layer
+from geoapi import convertColorToValue, getLayerSpaceTimePixel, Layer
 
 def coords_to_distance(coords_list: list[tuple[float,float]]) -> tuple[float,tuple[float,float]]:
     distance_list = []
@@ -28,7 +28,7 @@ def perceived_temperature_at_coords(lon, lat) -> float:
     time = datetime.fromisoformat("2023-08-11T10:00:00+00:00")  # TODO: proper time parameter
 
     pixel = getLayerSpaceTimePixel(layer, lat, lon, time)
-    approxTemperature = convertColorToTemperature(layer, pixel)
+    approxTemperature = convertColorToValue(layer, pixel)
 
     return approxTemperature
 

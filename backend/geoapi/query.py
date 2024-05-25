@@ -5,7 +5,7 @@ import os
 
 from PIL.Image import ImagePointHandler
 
-from .klips_connector import downloadLayerAtTime, getBoundingBox, Layer
+from .klips_connector import downloadLayer, getBoundingBox, Layer
 
 
 def logMsg(msg):
@@ -13,8 +13,8 @@ def logMsg(msg):
         print(f"[{__name__}] {msg}")
 
 
-def getLayerSpaceTimePixel(layer: Layer, lat: float, lon: float, time: datetime):
-    logMsg(f"Getting pixel for layer {str(layer)}, lat {lat}, lon {lon}, time {time.strftime('%d/%m/%Y %H:%M:%S')}")
+def getLayerSpaceTimePixel(layer: Layer, lat: float, lon: float, time: datetime | None = None):
+    logMsg(f"Getting pixel for layer {str(layer)}, lat {lat}, lon {lon}, time {'(no time)' if time is None else time.strftime('%d/%m/%Y %H:%M:%S')}")
 
     # Do sanity checks on received coordinates
     top, right, bottom, left = itemgetter("top", "right", "bottom", "left")(getBoundingBox(str(layer)))
@@ -24,7 +24,7 @@ def getLayerSpaceTimePixel(layer: Layer, lat: float, lon: float, time: datetime)
         raise RuntimeError(f"Longitude {lon} is not within [{left}, {right}]")
 
     # Get the image (includes sanity check on received time)
-    image = downloadLayerAtTime(str(layer), time)
+    image = downloadLayer(str(layer), time)
     imgWidth, imgHeight = image.size
 
     # Get fraction from left and bottom
@@ -41,9 +41,10 @@ def getLayerSpaceTimePixel(layer: Layer, lat: float, lon: float, time: datetime)
 
 
 def main():
-    testPx = getLayerSpaceTimePixel(Layer.PERCEIVED_TEMPERATURE, 51.012, 13.921,
-                                    datetime.fromisoformat("2023-08-10T15:00:00+00:00"))
-    print(f"Pixel value: {testPx}")
+    testPxHeat = getLayerSpaceTimePixel(Layer.PERCEIVED_TEMPERATURE, 51.08477, 13.77843,
+                                        datetime.fromisoformat("2023-08-10T15:00:00+00:00"))
+    testPxKlima = getLayerSpaceTimePixel(Layer.KLIMATOPE, 51.08477, 13.77843)
+    print(f"Pixel value:\n  heat:   {testPxHeat}\n  climate: {testPxKlima}")
 
 
 if __name__ == "__main__":

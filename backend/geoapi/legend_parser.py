@@ -10,12 +10,17 @@ __resourcePath__ = os.path.join(os.path.dirname(__file__), "resources")
 __layerToLegend__ = {
     Layer.PERCEIVED_TEMPERATURE: {
         "path": os.path.join(__resourcePath__, "legend_perceived_temp_only_colors.png"),
-        "minTemp": 14,
-        "maxTemp": 31
+        "min": 14,
+        "max": 31
+    },
+    Layer.KLIMATOPE: {
+        "path": os.path.join(__resourcePath__, "legend_klimatope_only_colors.png"),
+        "min": -2,
+        "max": 6
     }
 }
 
-__layerColorTempMap__: dict[Layer, tuple[NDArray, list]] = {}
+__layerColorValueMap__: dict[Layer, tuple[NDArray, list]] = {}
 
 
 def logMsg(msg):
@@ -23,13 +28,13 @@ def logMsg(msg):
         print(f"[{__name__}] {msg}")
 
 
-def extractColorsAndTemperatures(layer: Layer):
-    global __layerToLegend__, __layerColorTempMap__
+def extractColorsAndValues(layer: Layer):
+    global __layerToLegend__, __layerColorValueMap__
 
-    # Check if the legend colors and temperatures are already cached
-    if layer in __layerColorTempMap__:
+    # Check if the legend colors and values are already cached
+    if layer in __layerColorValueMap__:
         logMsg(f"Returning cached legend colors for layer {str(layer)}")
-        return __layerColorTempMap__[layer]
+        return __layerColorValueMap__[layer]
 
     # Load the legend image
     layerInfo = __layerToLegend__[layer]
@@ -40,7 +45,7 @@ def extractColorsAndTemperatures(layer: Layer):
 
     # Extract the colors at each vertical position
     colors = []
-    temperatures = []
+    values = []
 
     for y in range(height):
         # Get the color at the middle of the width
@@ -50,19 +55,19 @@ def extractColorsAndTemperatures(layer: Layer):
         # Calculate the corresponding temperature based on the y position
         # Here we assume that the temperature range is linear from top to bottom; this is not accurate is the legend is
         # stretched in the middle, but it's not gonna get any better for now
-        temperature = layerInfo["minTemp"] + (layerInfo["maxTemp"] - layerInfo["minTemp"]) * (y / height)
-        temperatures.append(temperature)
+        temperature = layerInfo["min"] + (layerInfo["max"] - layerInfo["min"]) * (y / height)
+        values.append(temperature)
 
     # Convert colors to a numpy array for easy distance calculation
     colors = np.array(colors)
 
     # Cache the results
-    __layerColorTempMap__[layer] = (colors, temperatures)
+    __layerColorValueMap__[layer] = (colors, values)
 
-    return (colors, temperatures)
+    return (colors, values)
 
 
-def closestTemperature(inputColor, colors, temperatures):
+def closestValue(inputColor, colors, values):
     # Calculate the Euclidean distance between the input color and all colors in the palette
     distances = np.sqrt(np.sum((colors - inputColor) ** 2, axis=1))
 
@@ -70,23 +75,24 @@ def closestTemperature(inputColor, colors, temperatures):
     closestIndex = np.argmin(distances)
 
     # Return the corresponding temperature
-    return temperatures[closestIndex]
+    return values[closestIndex]
 
 
-def convertColorToTemperature(layer: Layer, pixel: tuple[int, int, int] | tuple[int, int, int, int]):
+def convertColorToValue(layer: Layer, pixel: tuple[int, int, int] | tuple[int, int, int, int]):
     pixelWithoutAlpha = pixel[:3]
-    colors, temperatures = extractColorsAndTemperatures(layer)
-    temperature = closestTemperature(pixelWithoutAlpha, colors, temperatures)
-    logMsg(f"Returning temperature: {temperature:.2f} °C")
-    return temperature
+    colors, values = extractColorsAndValues(layer)
+    value = closestValue(pixelWithoutAlpha, colors, values)
+    logMsg(f"Returning value: {value}")
+    return value
 
 
 def main():
     # Example usage
-    inputColor = (255, 0, 0)  # Replace this with your input color
-    colors, temperatures = extractColorsAndTemperatures(Layer.PERCEIVED_TEMPERATURE)
-    temperature = closestTemperature(inputColor, colors, temperatures)
-    print(f"The temperature corresponding to the color {inputColor} is {temperature:.2f} °C")
+    inputColor = (200, 255, 200)  # Replace this with your input color
+    colors, values = extractColorsAndValues(Layer.KLIMATOPE)
+    print(f"Colors: {colors}, values: {values}")
+    value = closestValue(inputColor, colors, values)
+    print(f"The value corresponding to the color {inputColor} is {value}")
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ __layerImageMap__: dict[str, Image.Image] = {}
 
 class Layer(StrEnum):
     PERCEIVED_TEMPERATURE = "dresden:dresden_summer_perceived"
+    KLIMATOPE = "dresden:klimatope"
 
 
 def logMsg(msg):
@@ -27,8 +28,8 @@ def logMsg(msg):
         print(f"[{__name__}] {msg}")
 
 
-def getLayerTimeKey(layerName: str, time: datetime):
-    return f"{layerName}\0{time.strftime('%Y%m%d%H')}"
+def getLayerTimeKey(layerName: str, time: datetime | None = None):
+    return f"{layerName}\0{'0000000000' if time is None else time.strftime('%Y%m%d%H')}"
 
 
 def getWms() -> WebMapService_1_3_0:
@@ -93,40 +94,41 @@ def getTimeFrameOfLayer(layer: ContentMetadata):
     return (startDate, endDate)
 
 
-def downloadLayerAtTime(layerName: str, time: datetime):
+def downloadLayer(layerName: str, time: datetime | None = None):
     global __layerImageMap__
 
     # Get basic data
     wms = getWms()
     layer: ContentMetadata = wms[layerName]
 
-    # Truncate given time (no minutes or seconds supported)
-    if time.minute != 0 or time.second != 0:
-        logMsg(f"Given time has non-zero minutes ({time.minute}) or seconds ({time.second}), setting them to zero")
-        time = time.replace(minute=0, second=0)
+    if time is not None:
+        # Truncate given time (no minutes or seconds supported)
+        if time.minute != 0 or time.second != 0:
+            logMsg(f"Given time has non-zero minutes ({time.minute}) or seconds ({time.second}), setting them to zero")
+            time = time.replace(minute=0, second=0)
 
-    # Confirm that the time is valid
-    startDate, endDate = getTimeFrameOfLayer(layer)
-    if time < startDate or time > endDate:
-        raise RuntimeError(f"Given time {str(time)} is not within [{str(startDate)}, {str(endDate)}]")
+        # Confirm that the time is valid
+        startDate, endDate = getTimeFrameOfLayer(layer)
+        if time < startDate or time > endDate:
+            raise RuntimeError(f"Given time {str(time)} is not within [{str(startDate)}, {str(endDate)}]")
 
     # Check if the image is already cached
     key = getLayerTimeKey(layerName, time)
     if key in __layerImageMap__:
-        logMsg(f"Returning \"{layerName}\" at {time.strftime('%d/%m/%Y %H:%M:%S')} from cache")
+        logMsg(f"Returning \"{layerName}\" at {'(no time)' if time is None else time.strftime('%d/%m/%Y %H:%M:%S')} from cache")
         return __layerImageMap__[key]
 
     # Image is not yet cached → download and cache it
-    logMsg(f"Downloading \"{layerName}\" at {time.strftime('%d/%m/%Y %H:%M:%S')} ...")
+    logMsg(f"Downloading \"{layerName}\" at {'(no time)' if time is None else time.strftime('%d/%m/%Y %H:%M:%S')} ...")
 
     boundingBox = getBoundingBox(layer)
     imageDimensions = getSizeFromBoundingBox(boundingBox, res=10)
 
     # Download PNG
-    response = wms.getmap(layers=[str(Layer.PERCEIVED_TEMPERATURE)],
+    response = wms.getmap(layers=[str(layerName)],
                           srs="EPSG:4326",  # geodetic reference system: WGS84
                           bbox=(boundingBox["left"], boundingBox["bottom"], boundingBox["right"], boundingBox["top"]),
-                          time=time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                          time=(None if time is None else time.strftime("%Y-%m-%dT%H:%M:%S.000Z")),
                           size=imageDimensions,
                           format="image/png",
                           transparent=True)
@@ -181,15 +183,44 @@ def main():
 
     # Iterate over time window
     ptIterDate = ptStartDate
-    while ptIterDate <= ptEndDate:
+    # while ptIterDate <= ptEndDate:
+    while ptIterDate <= ptStartDate:  # 1 iteration for testing purposes
         # Get PIL Image
-        img = downloadLayerAtTime(str(Layer.PERCEIVED_TEMPERATURE), ptIterDate)
+        print(f"Downloading for {ptIterDate.strftime('%d/%m/%Y %H:%M:%S')} ...")
+        img = downloadLayer(str(Layer.PERCEIVED_TEMPERATURE), ptIterDate)
 
         # Write to file
         img.save(f"{tmpPath}/klips_heat_{ptIterDate.strftime('%Y-%m-%d_%H.%M.%S')}.png")
 
         # Increment time
         ptIterDate += ptTimeResolution
+
+    # All done :) proceed to next layer
+    print("Done!")
+
+    klimaTempLayer = wms[str(Layer.KLIMATOPE)]
+    print(f"Selecting layer: {klimaTempLayer.title}")
+
+    # Get bounding box
+    klimaTempBox = getBoundingBox(klimaTempLayer)
+    print("Bounding box of layer:")
+    print(f"  bottom left: {klimaTempBox['bottom']} N, {klimaTempBox['left']} E")
+    print(f"  top right:   {klimaTempBox['top']} N, {klimaTempBox['right']} E")
+
+    ktSize = getSizeFromBoundingBox(klimaTempBox, res=10)
+    print(f"Resulting image size in px: ({ktSize[0]}, {ktSize[1]})")
+
+    # Prepare folder
+    tmpPath = "/tmp/klips"
+    makeSurePathExists(tmpPath)
+
+    # Only one image as it is time-invariant
+    # Get PIL Image
+    print("Downloading ...")
+    img = downloadLayer(str(Layer.KLIMATOPE))
+
+    # Write to file
+    img.save(f"{tmpPath}/klips_klima.png")
 
     # All done :)
     print("Done!")
