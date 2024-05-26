@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #inputs {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 85px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px 60px 25px 140px;
+            background-color: rgba(255, 255, 255, 0.6);
+            z-index: 999; // map zoom buttons have z-index 1000, we want to be slightly below that
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            margin-right: 10px;
+            font-size: 2rem;
+        }
+
+        .welcome-text {
+            font-size: 2.7rem;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 200px;
+            padding: 5px;
+        }
+
+        input[type="range"] {
+            accent-color: #4CAF50;
+            margin-left: 25px !important;
+            width: 70%;
+            transform: scale(1.3);
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            cursor: pointer;
+            opacity: 0.8;
+            box-sizing: border-box;
+            font-size: 2.5rem !important;
+            width: 20rem;
+        }
+
+        button:hover {
+            opacity: 1.0;
+        }
+
+        button.activeButton {
+            background-color: #2C6F30;
+        }
+
+        .paramSlider {
+            opacity: 0.8
+		}
+
+        .paramSlider:hover {
+            opacity: 1.0
+        }
+
+        .paramSliderLabel {
+            opacity: 0.7;
+            margin-right: 1rem;
+        }
+    </style>
+
+    <script>
+        L_NO_TOUCH = false;
+        L_DISABLE_3D = false;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+
+    <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <title>CoolPath</title>
+
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="loading" style="visibility: hidden; position:absolute; z-index: 5000; width: 100%; height: 100%; display: flex; top: 0px; justify-content: center; align-items: center; background: rgba(0,0,0,0.5)">
+    <div style="font-size: 40px; color: white">
+        Route wird geladen. Bitte warten.
+    </div>
+</div>
+
+<div id="inputs">
+    <div class="input-group">
+        <!-- <input type="text" id="startLocation" placeholder="Start"> -->
+        <button id="startButton">Start ändern</button>
+    </div>
+    <div class="input-group">
+        <!-- <input type="text" id="endLocation" placeholder="Ziel"> -->
+        <button id="endButton">Ziel ändern</button>
+    </div>
+    <div class="input-group">
+        <label for="percTempWeight" class="paramSliderLabel">Gewichtung g. Temp.:</label>
+        <input type="range" id="percTempWeight" class="paramSlider" min="0.1" max="10" step="0.1" value="0.5" />
+    </div>
+	<div class="input-group">
+        <label for="climatopeWeight" class="paramSliderLabel">Gewichtung Klimatope:</label>
+        <input type="range" id="climatopeWeight" class="paramSlider" min="0.1" max="10" step="0.1" value="0.6" />
+	</div>
+</div>
+
+
+</body>
+<script>
+    var map = L.map(
+        "map",
+        {
+            center: [51.02841663106986, 13.7598230978543],
+            crs: L.CRS.EPSG3857,
+            zoom: 12,
+            zoomControl: true,
+            preferCanvas: false,
+        }
+    );
+
+    var startLocationEnabled = false;
+    var startMarker = null;
+    var endLocationEnabled = false;
+    var endMarker = null;
+
+    var percTempWeight = Number.parseFloat(document.getElementById("percTempWeight").value);
+    var climatopeWeight = Number.parseFloat(document.getElementById("climatopeWeight").value);
+
+    var routeMarkers = [];
+
+    var runningXhr = null;
+    var refreshTimer = null;
+
+    /**
+     * function to re-fetch the route from the backend, using the current values from the user inputs
+     * @param {number} delay  the delay in ms that the refresh waits for additional changes before firing the request
+     */
+    function refreshPath(delay = 300) {
+        if(refreshTimer) {
+            clearTimeout(refreshTimer);
+        }
+
+        if(!startMarker || !endMarker) {
+            return;
+        }
+
+        refreshTimer = setTimeout(() => {
+            if(runningXhr && runningXhr.readyState !== 4) {
+                runningXhr.abort();
+            }
+
+            startMarkerPos = startMarker.getLatLng();
+            endMarkerPos = endMarker.getLatLng();
+
+            document.getElementById("loading").style.visibility = "visible";
+
+            runningXhr = $.ajax({
+                url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}&perceived_gamma=${percTempWeight}&climatope_zeta=${climatopeWeight}`,
+                method: 'GET',
+                success: function(response) {
+                    runningXhr = null;
+                    console.log("routeMarkers", routeMarkers);
+
+                    routeMarkers.forEach((element) => map.removeLayer(element));
+                    routeMarkers = [];
+
+                    points = response.map((x) => [x.latitude, x.longitude]);
+
+                    routeMarkers.push(L.polyline(points, {color: 'red'}).addTo(map));
+                },
+                error: function(xhr, status, error) {
+                    runningXhr = null;
+                    console.error(error);
+                },
+                complete: function() {
+                    document.getElementById("loading").style.visibility = "hidden";
+                }
+            });
+        }, delay);
+    }
+
+    // add user control event listeners
+    document.getElementById('startButton').addEventListener('click', function() {
+        startLocationEnabled = true;
+        endLocationEnabled = false;
+        $("#startButton").addClass("activeButton");
+    });
+
+    document.getElementById('endButton').addEventListener('click', function() {
+        endLocationEnabled = true;
+        startLocationEnabled = false;
+        $("#endButton").addClass("activeButton");
+    });
+
+    document.getElementById('percTempWeight').addEventListener('input', (event) => {
+        percTempWeight = Number.parseFloat(event.target.value);
+        refreshPath();
+    });
+
+    document.getElementById('climatopeWeight').addEventListener('input', (event) => {
+        climatopeWeight = Number.parseFloat(event.target.value);
+        refreshPath();
+    });
+
+    var welcomeMode = 0; // 0: select initial start, 1: select initial end, >1: normal behavior
+
+    // add map onClick handler to store the start/end locations, depending on the currently active mode
+    map.on('click', function(e){
+        var coord = e.latlng;
+        var lat = coord.lat;
+        var lng = coord.lng;
+
+        let hasSomethingChanged = false;
+
+        console.log("You clicked the map at latitude: " + lat + " and longitude: " + lng);
+
+        if(startLocationEnabled || welcomeMode === 0) {
+            if(startMarker != null)
+                map.removeLayer(startMarker);
+
+            startMarker = L.marker(e.latlng, {}).addTo(map);
+            startLocationEnabled = false;
+            $("#startButton").removeClass("activeButton");
+            hasSomethingChanged = true
+
+            if (welcomeMode === 0) {
+                continueWelcome();
+            }
+        } else if(endLocationEnabled || welcomeMode === 1) {
+            if(endMarker != null)
+                map.removeLayer(endMarker);
+
+            endMarker = L.marker(e.latlng, {}).addTo(map);
+            endLocationEnabled = false;
+            $("#endButton").removeClass("activeButton");
+            hasSomethingChanged = true
+
+            if (welcomeMode === 1) {
+                continueWelcome();
+            }
+        }
+
+        if(startMarker != null && endMarker != null && hasSomethingChanged) {
+            refreshPath();
+        }
+    });
+
+    var tile_layer_1220d4919f86b1d18997f842be67a06d = L.tileLayer(
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+    );
+
+
+    tile_layer_1220d4919f86b1d18997f842be67a06d.addTo(map);
+
+    // startup of the app: hide the standard controls and guide the user to select the first route
+    $(".input-group").css("display", "none")
+    $("#inputs").append('<div class="input-group welcome-text" id="welcome">Willkommen! Klicke deinen Startpunkt auf der Karte an.</div>');
+
+    function continueWelcome() {
+        if (welcomeMode === 0) {
+            welcomeMode = 1;
+            $("#welcome").html("Danke! Jetzt klicke dein Ziel an.");
+            endLocationEnabled = true;
+        } else if (welcomeMode === 1) {
+            welcomeMode = 2;
+            $("#welcome").remove();
+            $(".input-group").css("display", "flex");
+        }
+    }
+
+</script>
+</html>
