@@ -17,26 +17,37 @@
 
         #inputs {
             position: absolute;
-            bottom: 0;
+            top: 0;
             left: 0;
             width: 100vw;
+            height: 85px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.5);
-            z-index: 1000;
+            padding: 25px 25px 25px 100px;
+            background-color: rgba(255, 255, 255, 0.4);
+            z-index: 999; // map zoom buttons have z-index 1000, we want to be slightly below that
         }
 
         .input-group {
             display: flex;
             flex-direction: row;
             margin-right: 10px;
+            font-size: 2rem;
+        }
+
+        .welcome-text {
+            font-size: 2.5rem;
+            font-weight: bold;
         }
 
         input[type="text"] {
             width: 200px;
             padding: 5px;
+        }
+
+        input[type="range"] {
+            accent-color: coral;
         }
 
         button {
@@ -91,19 +102,19 @@
 
 <div id="inputs">
     <div class="input-group">
-        <input type="text" id="startLocation" placeholder="Start">
-        <button id="startButton">Start setzen</button>
+        <!-- <input type="text" id="startLocation" placeholder="Start"> -->
+        <button id="startButton">Start ändern</button>
     </div>
     <div class="input-group">
-        <input type="text" id="endLocation" placeholder="Ziel">
-        <button id="endButton">Ziel setzen</button>
+        <!-- <input type="text" id="endLocation" placeholder="Ziel"> -->
+        <button id="endButton">Ziel ändern</button>
     </div>
     <div class="input-group">
-        <label for="percTempWeight" class="paramSliderLabel">G.-Temp.-Gewichtung:</label>
+        <label for="percTempWeight" class="paramSliderLabel">Gewichtung g. Temp.:</label>
         <input type="range" id="percTempWeight" class="paramSlider" min="0.1" max="10" step="0.1" value="0.5" />
     </div>
 	<div class="input-group">
-        <label for="climatopeWeight" class="paramSliderLabel">Klimatop-Gewichtung:</label>
+        <label for="climatopeWeight" class="paramSliderLabel">Gewichtung Klimatope:</label>
         <input type="range" id="climatopeWeight" class="paramSlider" min="0.1" max="10" step="0.1" value="1.8" />
 	</div>
 </div>
@@ -135,6 +146,10 @@
     var runningXhr = null;
     var refreshTimer = null;
 
+    /**
+     * function to re-fetch the route from the backend, using the current values from the user inputs
+     * @param {number} delay  the delay in ms that the refresh waits for additional changes before firing the request
+     */
     function refreshPath(delay = 300) {
         if(refreshTimer) {
             clearTimeout(refreshTimer);
@@ -175,6 +190,7 @@
         }, delay);
     }
 
+    // add user control event listeners
     document.getElementById('startButton').addEventListener('click', function() {
         startLocationEnabled = true;
         endLocationEnabled = false;
@@ -195,6 +211,9 @@
         refreshPath();
     });
 
+    var welcomeMode = 0; // 0: select initial start, 1: select initial end, >1: normal behavior
+
+    // add map onClick handler to store the start/end locations, depending on the currently active mode
     map.on('click', function(e){
         var coord = e.latlng;
         var lat = coord.lat;
@@ -202,20 +221,26 @@
 
         console.log("You clicked the map at latitude: " + lat + " and longitude: " + lng);
 
-        if(startLocationEnabled) {
+        if(startLocationEnabled || welcomeMode === 0) {
             if(startMarker != null)
                 map.removeLayer(startMarker);
 
             startMarker = L.marker(e.latlng, {}).addTo(map);
             startLocationEnabled = false;
-        }
 
-        if(endLocationEnabled) {
+            if (welcomeMode === 0) {
+                continueWelcome();
+            }
+        } else if(endLocationEnabled || welcomeMode === 1) {
             if(endMarker != null)
                 map.removeLayer(endMarker);
 
             endMarker = L.marker(e.latlng, {}).addTo(map);
             endLocationEnabled = false;
+
+            if (welcomeMode === 1) {
+                continueWelcome();
+            }
         }
 
         if(startMarker != null && endMarker != null) {
@@ -231,7 +256,21 @@
 
     tile_layer_1220d4919f86b1d18997f842be67a06d.addTo(map);
 
+    // startup of the app: hide the standard controls and guide the user to select the first route
+    $(".input-group").css("display", "none")
+    $("#inputs").append('<div class="input-group welcome-text" id="welcome">Willkommen! Klicke deinen Startpunkt auf der Karte an.</div>');
 
+    function continueWelcome() {
+        if (welcomeMode === 0) {
+            welcomeMode = 1;
+            $("#welcome").html("Danke! Jetzt klicke dein Ziel an.");
+            endLocationEnabled = true;
+        } else if (welcomeMode === 1) {
+            welcomeMode = 2;
+            $("#welcome").remove();
+            $(".input-group").css("display", "flex");
+        }
+    }
 
 </script>
 </html>
