@@ -113,4 +113,4 @@ def get_coordinates_from_address(search_string: str) -> Optional[Location]:
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="127.0.0.1", port=8015, workers=1)
+    uvicorn.run("server:app", host="0.0.0.0", port=8015, workers=1)
