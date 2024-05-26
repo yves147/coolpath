@@ -177,10 +177,9 @@
                     routeMarkers.forEach((element) => map.removeLayer(element));
                     routeMarkers = [];
 
-                    response.forEach((element) => {
-                        marker = L.marker([element.latitude, element.longitude], {}).addTo(map);
-                        routeMarkers.push(marker);
-                    });
+                    points = response.map((x) => [x.latitude, x.longitude]);
+
+                    routeMarkers.push(L.polyline(points, {color: 'red'}).addTo(map));
                 },
                 error: function(xhr, status, error) {
                     runningXhr = null;
