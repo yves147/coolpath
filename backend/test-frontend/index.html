@@ -113,6 +113,12 @@
 
 <div id="map"></div>
 
+<div id="loading" style="visibility: hidden; position:absolute; z-index: 5000; width: 100%; height: 100%; display: flex; top: 0px; justify-content: center; align-items: center; background: rgba(0,0,0,0.5)">
+    <div style="font-size: 40px; color: white">
+        Route wird geladen. Bitte warten.
+    </div>
+</div>
+
 <div id="inputs">
     <div class="input-group">
         <!-- <input type="text" id="startLocation" placeholder="Start"> -->
@@ -180,6 +186,8 @@
             startMarkerPos = startMarker.getLatLng();
             endMarkerPos = endMarker.getLatLng();
 
+            document.getElementById("loading").style.visibility = "visible";
+
             runningXhr = $.ajax({
                 url: `http://127.0.0.1:8015/route?start_long=${startMarkerPos.lng}&start_lat=${startMarkerPos.lat}&target_long=${endMarkerPos.lng}&target_lat=${endMarkerPos.lat}&perceived_gamma=${percTempWeight}&climatope_zeta=${climatopeWeight}`,
                 method: 'GET',
@@ -197,6 +205,9 @@
                 error: function(xhr, status, error) {
                     runningXhr = null;
                     console.error(error);
+                },
+                complete: function() {
+                    document.getElementById("loading").style.visibility = "hidden";
                 }
             });
         }, delay);
