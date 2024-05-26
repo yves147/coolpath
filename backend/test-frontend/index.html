@@ -24,7 +24,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 25px 25px 25px 100px;
+            padding: 25px 60px 25px 140px;
             background-color: rgba(255, 255, 255, 0.4);
             z-index: 999; // map zoom buttons have z-index 1000, we want to be slightly below that
         }
@@ -47,7 +47,10 @@
         }
 
         input[type="range"] {
-            accent-color: coral;
+            accent-color: #4CAF50;
+            margin-left: 25px !important;
+            width: 70%;
+            transform: scale(1.3);
         }
 
         button {
@@ -56,10 +59,15 @@
             border: none;
             color: white;
             cursor: pointer;
+            opacity: 0.8;
+        }
+
+        button:hover {
+            opacity: 1.0;
         }
 
         .paramSlider {
-            opacity: 0.7
+            opacity: 0.8
 		}
 
         .paramSlider:hover {
