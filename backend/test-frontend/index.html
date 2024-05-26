@@ -25,7 +25,7 @@
             align-items: center;
             justify-content: center;
             padding: 25px 60px 25px 140px;
-            background-color: rgba(255, 255, 255, 0.4);
+            background-color: rgba(255, 255, 255, 0.6);
             z-index: 999; // map zoom buttons have z-index 1000, we want to be slightly below that
         }
 
@@ -37,7 +37,7 @@
         }
 
         .welcome-text {
-            font-size: 2.5rem;
+            font-size: 2.7rem;
             font-weight: bold;
         }
 
@@ -61,6 +61,8 @@
             cursor: pointer;
             opacity: 0.8;
             box-sizing: border-box;
+            font-size: 2.5rem !important;
+            width: 20rem;
         }
 
         button:hover {
@@ -244,6 +246,8 @@
         var lat = coord.lat;
         var lng = coord.lng;
 
+        let hasSomethingChanged = false;
+
         console.log("You clicked the map at latitude: " + lat + " and longitude: " + lng);
 
         if(startLocationEnabled || welcomeMode === 0) {
@@ -253,6 +257,7 @@
             startMarker = L.marker(e.latlng, {}).addTo(map);
             startLocationEnabled = false;
             $("#startButton").removeClass("activeButton");
+            hasSomethingChanged = true
 
             if (welcomeMode === 0) {
                 continueWelcome();
@@ -264,13 +269,14 @@
             endMarker = L.marker(e.latlng, {}).addTo(map);
             endLocationEnabled = false;
             $("#endButton").removeClass("activeButton");
+            hasSomethingChanged = true
 
             if (welcomeMode === 1) {
                 continueWelcome();
             }
         }
 
-        if(startMarker != null && endMarker != null) {
+        if(startMarker != null && endMarker != null && hasSomethingChanged) {
             refreshPath();
         }
     });
