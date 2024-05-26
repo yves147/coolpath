@@ -60,10 +60,15 @@
             color: white;
             cursor: pointer;
             opacity: 0.8;
+            box-sizing: border-box;
         }
 
         button:hover {
             opacity: 1.0;
+        }
+
+        button.activeButton {
+            background-color: #2C6F30;
         }
 
         .paramSlider {
@@ -201,11 +206,13 @@
     document.getElementById('startButton').addEventListener('click', function() {
         startLocationEnabled = true;
         endLocationEnabled = false;
+        $("#startButton").addClass("activeButton");
     });
 
     document.getElementById('endButton').addEventListener('click', function() {
         endLocationEnabled = true;
         startLocationEnabled = false;
+        $("#endButton").addClass("activeButton");
     });
 
     document.getElementById('percTempWeight').addEventListener('input', (event) => {
@@ -234,6 +241,7 @@
 
             startMarker = L.marker(e.latlng, {}).addTo(map);
             startLocationEnabled = false;
+            $("#startButton").removeClass("activeButton");
 
             if (welcomeMode === 0) {
                 continueWelcome();
@@ -244,6 +252,7 @@
 
             endMarker = L.marker(e.latlng, {}).addTo(map);
             endLocationEnabled = false;
+            $("#endButton").removeClass("activeButton");
 
             if (welcomeMode === 1) {
                 continueWelcome();
